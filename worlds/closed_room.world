@@ -1,0 +1,165 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="closed_room">
+
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- North Wall -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0 3 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- South Wall -->
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -3 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- East Wall -->
+    <model name="wall_east">
+      <static>true</static>
+      <pose>3 0 0.5 0 0 1.5707</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- West Wall -->
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-3 0 0.5 0 0 1.5707</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>6 0.1 1</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ========== OBSTACLES ========== -->
+
+    <!-- Box obstacle - center-right area -->
+    <model name="obstacle_box1">
+      <static>true</static>
+      <pose>1.5 0.5 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>0.35 0.35 0.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.35 0.35 0.5</size></box></geometry>
+          <material><ambient>0.9 0.2 0.2 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Box obstacle - creates narrow passage -->
+    <model name="obstacle_box2">
+      <static>true</static>
+      <pose>0.0 -1.0 0.25 0 0 0.4</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>0.8 0.2 0.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.8 0.2 0.5</size></box></geometry>
+          <material><ambient>0.2 0.8 0.3 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Cylinder obstacle - near south wall -->
+    <model name="obstacle_cylinder2">
+      <static>true</static>
+      <pose>1.5 -1.5 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><cylinder><radius>0.2</radius><length>0.5</length></cylinder></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.2</radius><length>0.5</length></cylinder></geometry>
+          <material><ambient>0.9 0.7 0.1 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Small box - near center -->
+    <model name="obstacle_box3">
+      <static>true</static>
+      <pose>-1.5 -1.5 0.15 0 0 0.8</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>0.45 0.25 0.3</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.45 0.25 0.3</size></box></geometry>
+          <material><ambient>0.7 0.3 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- L-shaped obstacle using two boxes -->
+    <model name="obstacle_L1">
+      <static>true</static>
+      <pose>-2.0 0.0 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>0.2 1.0 0.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.2 1.0 0.5</size></box></geometry>
+          <material><ambient>0.5 0.5 0.5 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_L2">
+      <static>true</static>
+      <pose>-1.55 0.45 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>0.5 0.2 0.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.5 0.2 0.5</size></box></geometry>
+          <material><ambient>0.5 0.5 0.5 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
