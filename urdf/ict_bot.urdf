@@ -161,6 +161,50 @@
     <child link="base_scan"/>
   </joint>
 
+  <!-- ========== RGB-D DEPTH CAMERA ========== -->
+  <!-- Physical camera body (simulates a RealSense D435-style sensor) -->
+  <link name="camera_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.05"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0"
+               iyy="1e-05" iyz="0"
+               izz="1e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.025 0.090 0.025"/>
+      </geometry>
+      <material name="camera_material">
+        <color rgba="0.1 0.1 0.1 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.025 0.090 0.025"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- camera_joint: front of robot, below LiDAR.
+       rpy="0 0 -1.5708" rotates camera +X to face robot-forward.
+       (Robot moves in -Y of link_base; -90° Z aligns camera +X with link_base -Y) -->
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0 -0.08 0.10" rpy="0 0 -1.5708"/>
+    <parent link="link_base"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <!-- Standard ROS optical frame: Z forward, X right, Y down -->
+  <link name="camera_optical_link"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    <parent link="camera_link"/>
+    <child link="camera_optical_link"/>
+  </joint>
+
   <!-- ========== GAZEBO PLUGINS ========== -->
 
   <!-- Differential Drive Plugin -->
@@ -202,7 +246,10 @@
     <mu2>1.0</mu2>
   </gazebo>
 
-  <!-- LiDAR Sensor Plugin -->
+  <!-- LiDAR Sensor Plugin — commented out for pure VSLAM mode.
+       The base_scan link and lidar_joint are kept above so the robot
+       model still renders correctly in RViz. Remove these comment tags
+       to re-enable LiDAR and use slam.launch.py / navigation.launch.py.
   <gazebo reference="base_scan">
     <sensor type="ray" name="lidar_sensor">
       <pose>0 0 0 0 0 0</pose>
@@ -234,6 +281,50 @@
         </ros>
         <output_type>sensor_msgs/LaserScan</output_type>
         <frame_name>base_scan</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+  -->
+
+  <!-- RGB-D Depth Camera Sensor Plugin
+       Publishes: /camera/color/image_raw, /camera/color/camera_info,
+                  /camera/depth/image_raw, /camera/depth/camera_info,
+                  /camera/depth/points -->
+  <gazebo reference="camera_link">
+    <sensor type="depth" name="depth_camera">
+      <always_on>true</always_on>
+      <update_rate>30</update_rate>
+      <camera name="depth_camera">
+        <horizontal_fov>1.047198</horizontal_fov>  <!-- 60 degrees -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>8.0</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.005</stddev>
+        </noise>
+      </camera>
+      <plugin name="gazebo_ros_depth_camera" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>camera</namespace>
+          <remapping>image_raw:=color/image_raw</remapping>
+          <remapping>image_depth:=depth/image_raw</remapping>
+          <remapping>camera_info:=color/camera_info</remapping>
+          <remapping>camera_info_depth:=depth/camera_info</remapping>
+          <remapping>points:=depth/points</remapping>
+        </ros>
+        <camera_name>depth_camera</camera_name>
+        <frame_name>camera_optical_link</frame_name>
+        <hack_baseline>0.07</hack_baseline>
+        <min_depth>0.1</min_depth>
+        <max_depth>8.0</max_depth>
       </plugin>
     </sensor>
   </gazebo>

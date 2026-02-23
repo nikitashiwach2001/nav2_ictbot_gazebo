@@ -1,0 +1,64 @@
+rtabmap:
+  ros__parameters:
+    use_sim_time: True
+
+    # TF frames
+    frame_id: base_footprint
+    odom_frame_id: odom
+    map_frame_id: map
+
+    # Subscribe to synchronized RGBD image (from rgbd_sync node) + LiDAR + wheel odom
+    subscribe_depth: False          # Gazebo: not subscribing to raw depth/rgb separately
+    subscribe_rgbd: True            # Gazebo: subscribing to synchronized /rgbd_image topic
+    subscribe_scan: False            # also feed LiDAR for better SLAM quality
+    approx_sync: True
+    approx_sync_max_interval: 0.02
+    queue_size: 10
+
+    # ── 2D Navigation constraint ──────────────────────────────────────────────
+    Reg/Force3DoF: "true"
+    subscribe_stereo: False
+    subscribe_rgb: False
+
+    # ── 2D Occupancy Grid (published as /map for Nav2) ─────────────────────
+    Grid/CellSize: "0.05"
+    Grid/RangeMax: "5.0"
+    Grid/3D: "false"                # 2D grid for Nav2; cloud_map is built separately
+
+    # ── Visual Feature Matching ────────────────────────────────────────────
+    Vis/MinInliers: "5"
+
+    # ── Map Update Rate ────────────────────────────────────────────────────
+    Rtabmap/TimeThr: "0"
+    Rtabmap/DetectionRate: "3"
+
+    # ── Node Creation Triggers ─────────────────────────────────────────────
+    RGBD/LinearUpdate: "0.1"
+    RGBD/AngularUpdate: "0.1"
+
+    # ── Proximity-Based Loop Closure ──────────────────────────────────────
+    RGBD/ProximityBySpace: "true"
+
+    # ── Memory / Image Decimation ──────────────────────────────────────────
+    Mem/ImagePreDecimation: "1"
+    Mem/ImagePostDecimation: "1"
+
+    # ── Loop Closure ──────────────────────────────────────────────────────
+    RGBD/OptimizeMaxError: "3"
+
+    # ── Dense 3D Cloud Map Assembly ───────────────────────────────────────
+    # cloud_voxel_size: voxel size for the assembled /cloud_map
+    # 0.0 = no voxelization (keep every point) → densest cloud
+    # 0.02 = 2cm voxels (recommended balance of density vs performance)
+    cloud_voxel_size: 0.02
+
+    # cloud_decimation: use 1 out of every N depth pixels for cloud map
+    # 1 = use ALL pixels from depth image → fully dense wall surfaces
+    # 4 = default (only 1/16th of depth pixels) → sparse/flat looking
+    cloud_decimation: 1
+
+    # cloud_max_depth: ignore depth points beyond this distance (meters)
+    cloud_max_depth: 4.0
+
+    # cloud_min_depth: ignore depth points closer than this distance (meters)
+    cloud_min_depth: 0.1
