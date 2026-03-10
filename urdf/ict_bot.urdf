@@ -161,6 +161,40 @@
     <child link="base_scan"/>
   </joint>
 
+
+  <!-- ========== 3D LIDAR ========== -->
+  <link name="lidar_3d">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="1e-05" ixy="0" ixz="0"
+               iyy="1e-05" iyz="0"
+               izz="1e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.04" length="0.06"/>
+      </geometry>
+      <material name="lidar3d_material">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.04" length="0.06"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="lidar_3d_joint" type="fixed">
+    <origin xyz="0 -0.0284286 0.22" rpy="0 0 0"/>
+    <parent link="link_base"/>
+    <child link="lidar_3d"/>
+  </joint>
+
+
   <!-- ========== GAZEBO PLUGINS ========== -->
 
   <!-- Differential Drive Plugin -->
