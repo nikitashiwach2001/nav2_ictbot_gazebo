@@ -31,32 +31,40 @@ def generate_launch_description():
 
     return LaunchDescription([
 
+        # ── 0. Static TF: camera_link → camera_optical_link ───────────────
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='camera_optical_tf',
+            arguments=[
+                '--x', '0', '--y', '0', '--z', '0',
+                '--roll', '-1.5708', '--pitch', '0', '--yaw', '-1.5708',
+                '--frame-id', 'camera_link',
+                '--child-frame-id', 'camera_optical_link',
+            ],
+        ),
+
         # ── 1. RGB-D Sync ──────────────────────────────────────────────────
-        # Gazebo mode: subscribe_rgbd=True → rgbd_sync is needed
-        # Isaac Sim mode: subscribe_depth=True → RTAB-Map subscribes directly; rgbd_sync not needed
-        # Node(
-        #     package='rtabmap_sync',
-        #     executable='rgbd_sync',
-        #     name='rgbd_sync',
-        #     output='screen',
-        #     parameters=[{
-        #         'use_sim_time': True,
-        #         'approx_sync': True,
-        #         # 'approx_sync_max_interval': 0.02,  # Gazebo (low jitter)
-        #         # 'queue_size': 10,                  # Gazebo
-        #         'approx_sync_max_interval': 0.1,     # Isaac Sim (higher jitter ~123ms)
-        #         'queue_size': 30,                    # Isaac Sim
-        #     }],
-        #     remappings=[
-        #         ('rgb/image',       '/camera/depth_camera/image_raw'),
-        #         ('rgb/camera_info', '/camera/depth_camera/camera_info'),
-        #         ('depth/image',     '/camera/depth_camera/depth/image_raw'),
-        #     ]
-        # ),
+        # Synchronises raw rgb + depth topics into /rgbd_image for RTAB-Map.
+        Node(
+            package='rtabmap_sync',
+            executable='rgbd_sync',
+            name='rgbd_sync',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'approx_sync': True,
+                'approx_sync_max_interval': 0.4, 
+                'queue_size': 10,
+            }],
+            remappings=[
+                ('rgb/image',       '/camera/depth_camera/image_raw'),
+                ('rgb/camera_info', '/camera/depth_camera/camera_info'),
+                ('depth/image',     '/camera/depth_camera/depth/image_raw'),
+            ]
+        ),
 
         # ── 2. RTAB-Map SLAM (camera-only mapping mode) ───────────────────
-        # subscribe_scan: false  → ignore /scan completely, RGB-D only.
-        # All other settings same as vslam.launch.py.
         Node(
             package='rtabmap_slam',
             executable='rtabmap',
@@ -69,39 +77,40 @@ def generate_launch_description():
                     'Mem/IncrementalMemory': 'true',
                     'Mem/InitWMWithAllNodes': 'false',
                     'map_always_update': True,
-                    # ── Camera-only overrides ─────────────────────────────
-                    'subscribe_scan': False,   # do NOT use LiDAR scan
+                    # Camera-only overrides ─────────────────────────────
+                    'subscribe_scan': False,   # do not use LiDAR scan
                     'RGBD/ProximityBySpace': 'false',
+                    'Kp/MaxFeatures': '-1',
 
-                    # Disable visual loop closure detection completely.
-                    #
-                    # WHY: Gazebo uses uniform/textureless walls (same color, no
-                    # patterns). RTAB-Map's feature detector (ORB) finds visually
-                    # similar features in completely different locations
-                    # ("perceptual aliasing"). Some false pairs accidentally pass
-                    # the geometric inlier check → loop closure accepted → pose
-                    # graph reoptimized → robot position jumps in RViz → map
-                    # builds at wrong points.
-                    #
-                    # EFFECT: Map is built purely from depth images + wheel
-                    # odometry. No visual drift correction, but no jumps either.
-                    # Gazebo's diff_drive odometry is accurate enough for
-                    # reliable map building without loop closure.
-                    #
-                    # To re-enable loop closure (real robot / textured env):
-                    # comment out the line below.
-                    'Kp/MaxFeatures': '0',
+                    'database_path': '/home/user/Documents/ros2_ws_ict_nav2/src/ict_bot_nav/maps/office_3d_map.db',
+
+                    # 3D point cloud (dense, detailed) ─────────────────────
+                    'cloud_voxel_size': 0.02,        # 2cm voxels → dense cloud
+                    'cloud_max_depth': 4.0,
+
+                    # 2D occupancy grid (projected from 3D for Nav2) ────────
+                    'Grid/3D': 'true',               # build 3D voxel grid
+                    'Grid/Sensor': '1',              # 1 = depth camera
+                    'Grid/CellSize': '0.10',         # 10cm cells → clean grid
+                    'Grid/RangeMin': '0.3',          # ignore near-field noise
+                    'Grid/RangeMax': '4.0',          # max usable depth range
+                    'Grid/MaxObstacleHeight': '2.0', # ignore ceiling/high points
+                    'Grid/RayTracing': 'true',       # clear free space along rays
+
+                    # Height-based filtering (reliable for RGB-D cameras) ───
+                    'Grid/NormalsSegmentation': 'false',  # OFF: unreliable for RGB-D
+                    'Grid/NoiseFilteringRadius': '0.5',   # remove isolated noise
+                    'Grid/NoiseFilteringMinNeighbors': '2',
+
+                    # Registration & localization ───────────────────────────
+                    'Reg/Strategy': '0',             # 0 = Visual only (no LiDAR/ICP)
+
                 }
             ],
             remappings=[
-                # Gazebo mode (subscribe_rgbd=True): uncomment below
-                # ('rgbd_image', '/rgbd_image'),
-                # Isaac Sim mode (subscribe_depth=True): subscribe directly to raw topics
-                ('rgb/image',       '/camera/depth_camera/image_raw'),
-                ('rgb/camera_info', '/camera/depth_camera/camera_info'),
-                ('depth/image',     '/camera/depth_camera/depth/image_raw'),
+                ('rgbd_image', '/rgbd_image'),
                 # ('scan', '/scan'),  # commented out — no LiDAR in this mode
-                ('odom',            '/odom'),
+                ('odom',       '/odom'),
             ],
             arguments=['--delete_db_on_start'],
         ),

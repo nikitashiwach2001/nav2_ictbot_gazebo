@@ -8,33 +8,34 @@ rtabmap:
     map_frame_id: map
 
     # Subscribe to synchronized RGBD image (from rgbd_sync node) + LiDAR + wheel odom
-    subscribe_depth: False          # Gazebo: not subscribing to raw depth/rgb separately
-    subscribe_rgbd: True            # Gazebo: subscribing to synchronized /rgbd_image topic
+    subscribe_depth: False          
+    subscribe_rgbd: True            
     subscribe_scan: False            # also feed LiDAR for better SLAM quality
     approx_sync: True
     approx_sync_max_interval: 0.02
     queue_size: 10
 
     # ── 2D Navigation constraint ──────────────────────────────────────────────
-    Reg/Force3DoF: "true"
+    Reg/Force3DoF: "false"
     subscribe_stereo: False
     subscribe_rgb: False
 
     # ── 2D Occupancy Grid (published as /map for Nav2) ─────────────────────
-    Grid/CellSize: "0.05"
+    Grid/CellSize: "0.02"
     Grid/RangeMax: "5.0"
-    Grid/3D: "false"                # 2D grid for Nav2; cloud_map is built separately
+    Grid/3D: "true"                # 2D grid for Nav2; cloud_map is built separately
+    Grid/Sensor: "1"
 
     # ── Visual Feature Matching ────────────────────────────────────────────
-    Vis/MinInliers: "5"
+    Vis/MinInliers: "6"
 
     # ── Map Update Rate ────────────────────────────────────────────────────
     Rtabmap/TimeThr: "0"
     Rtabmap/DetectionRate: "3"
 
     # ── Node Creation Triggers ─────────────────────────────────────────────
-    RGBD/LinearUpdate: "0.1"
-    RGBD/AngularUpdate: "0.1"
+    RGBD/LinearUpdate: "0.05"
+    RGBD/AngularUpdate: "0.05"
 
     # ── Proximity-Based Loop Closure ──────────────────────────────────────
     RGBD/ProximityBySpace: "true"
@@ -50,7 +51,7 @@ rtabmap:
     # cloud_voxel_size: voxel size for the assembled /cloud_map
     # 0.0 = no voxelization (keep every point) → densest cloud
     # 0.02 = 2cm voxels (recommended balance of density vs performance)
-    cloud_voxel_size: 0.02
+    cloud_voxel_size: 0.01
 
     # cloud_decimation: use 1 out of every N depth pixels for cloud map
     # 1 = use ALL pixels from depth image → fully dense wall surfaces
@@ -58,7 +59,10 @@ rtabmap:
     cloud_decimation: 1
 
     # cloud_max_depth: ignore depth points beyond this distance (meters)
-    cloud_max_depth: 4.0
+    cloud_max_depth: 6.0
 
     # cloud_min_depth: ignore depth points closer than this distance (meters)
     cloud_min_depth: 0.1
+
+    database_path: "/home/user/Documents/ros2_ws_ict_nav2/src/ict_bot_nav/maps/office_3d_map.db"
+
