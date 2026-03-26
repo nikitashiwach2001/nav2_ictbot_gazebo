@@ -82,6 +82,10 @@ ros2 run nav2_map_server map_saver_cli -f ~/map_name
 
 This saves `map_name.yaml` and `map_name.pgm`. Copy them to `maps/` and update `yaml_filename` in `config/nav2_params.yaml`.
 
+## isaac sim scene (3d lidar)
+
+https://drive.google.com/drive/folders/1atrdg5wlMmPaBRIeUtHRM9ydsIf9IJZ4?usp=drive_link
+
 ---
 
 ## Configuration
