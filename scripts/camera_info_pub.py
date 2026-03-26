@@ -10,16 +10,13 @@ three topics.
 Camera intrinsics: 1280x720, horizontal FoV = 90 degrees (default Isaac Sim).
 Adjust HFOV_DEG below if your Isaac Sim camera uses a different field of view.
 """
-
 import math
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from sensor_msgs.msg import CameraInfo, Image
 
-
 HFOV_DEG = 82.6   # Isaac Sim camera horizontal field-of-view (degrees)
-
 
 class CameraInfoPub(Node):
     def __init__(self):

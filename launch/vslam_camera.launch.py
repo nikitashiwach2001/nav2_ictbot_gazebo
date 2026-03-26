@@ -31,6 +31,13 @@ def generate_launch_description():
 
     return LaunchDescription([
 
+        Node(
+            package='ict_bot_nav',
+            executable='camera_info_pub',
+            name='camera_info_pub',
+            output='screen',
+        ),
+
         # ── 0. Static TF: camera_link → camera_optical_link ───────────────
         Node(
             package='tf2_ros',
@@ -77,42 +84,45 @@ def generate_launch_description():
                     'Mem/IncrementalMemory': 'true',
                     'Mem/InitWMWithAllNodes': 'false',
                     'map_always_update': True,
-                    # Camera-only overrides ─────────────────────────────
-                    'subscribe_scan': False,   # do not use LiDAR scan
-                    'RGBD/ProximityBySpace': 'false',
+                    # Camera + LiDAR SLAM ───────────────────────────────
+                    'subscribe_scan': True,    # fuse LiDAR scan for clean wall mapping
+                    'RGBD/ProximityBySpace': 'true',  # LiDAR makes this reliable
                     'Kp/MaxFeatures': '-1',
 
                     'database_path': '/home/user/Documents/ros2_ws_ict_nav2/src/ict_bot_nav/maps/office_3d_map.db',
 
                     # 3D point cloud (dense, detailed) ─────────────────────
-                    'cloud_voxel_size': 0.02,        # 2cm voxels → dense cloud
-                    'cloud_max_depth': 4.0,
+                    'cloud_voxel_size': 0.02,        # 2cm voxels → captures chair legs
+                    'cloud_decimation': 1,           # all depth pixels
+                    'cloud_max_depth': 8.0,          # full office coverage
+                    'cloud_min_depth': 0.3,
 
-                    # 2D occupancy grid (projected from 3D for Nav2) ────────
-                    'Grid/3D': 'true',               # build 3D voxel grid
-                    'Grid/Sensor': '1',              # 1 = depth camera
-                    'Grid/CellSize': '0.10',         # 10cm cells → clean grid
-                    'Grid/RangeMin': '0.3',          # ignore near-field noise
-                    'Grid/RangeMax': '4.0',          # max usable depth range
-                    'Grid/MaxObstacleHeight': '2.0', # ignore ceiling/high points
-                    'Grid/RayTracing': 'true',       # clear free space along rays
+                    # 2D occupancy grid — LiDAR only, flat 2D (no projection artifacts)
+                    'Grid/3D': 'false',              # flat 2D grid: no wall-to-floor projection
+                    'Grid/Sensor': '0',              # 0 = LiDAR only for grid (clean 360° walls)
+                    'Grid/CellSize': '0.05',
+                    'Grid/RangeMin': '0.1',
+                    'Grid/RangeMax': '8.0',
+                    'Grid/GroundIsObstacle': 'false',
+                    'Grid/MaxObstacleHeight': '0.8', # chairs + desk legs, not ceiling
+                    'Grid/RayTracing': 'false',       # LiDAR ray tracing is clean — safe to enable
 
-                    # Height-based filtering (reliable for RGB-D cameras) ───
-                    'Grid/NormalsSegmentation': 'false',  # OFF: unreliable for RGB-D
-                    'Grid/NoiseFilteringRadius': '0.5',   # remove isolated noise
+                    # Noise filtering ───────────────────────────────────────
+                    'Grid/NormalsSegmentation': 'false',
+                    'Grid/NoiseFilteringRadius': '0.1',
                     'Grid/NoiseFilteringMinNeighbors': '2',
 
                     # Registration & localization ───────────────────────────
-                    'Reg/Strategy': '0',             # 0 = Visual only (no LiDAR/ICP)
+                    'Reg/Strategy': '2',             # 0 = Visual only (no LiDAR/ICP)
 
                 }
             ],
             remappings=[
                 ('rgbd_image', '/rgbd_image'),
-                # ('scan', '/scan'),  # commented out — no LiDAR in this mode
+                ('scan',       '/scan'),
                 ('odom',       '/odom'),
             ],
-            arguments=['--delete_db_on_start'],
+            # arguments=['--delete_db_on_start'],
         ),
 
         # ── 3. RViz ───────────────────────────────────────────────────────

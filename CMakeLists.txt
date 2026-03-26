@@ -13,4 +13,11 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  scripts/camera_info_pub.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME camera_info_pub
+)
+
+
 ament_package()

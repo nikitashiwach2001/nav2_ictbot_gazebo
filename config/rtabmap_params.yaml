@@ -12,26 +12,39 @@ rtabmap:
     subscribe_rgbd: True            
     subscribe_scan: False            # also feed LiDAR for better SLAM quality
     approx_sync: True
-    approx_sync_max_interval: 0.02
+    approx_sync_max_interval: 0.5
     queue_size: 10
 
-    # ── 2D Navigation constraint ──────────────────────────────────────────────
-    Reg/Force3DoF: "false"
+    # ── 2D Navigation constraint — CRITICAL for ground robots ─────────────────
+    Reg/Force3DoF: "true"          # lock pitch/roll to zero — prevents map tilting
     subscribe_stereo: False
     subscribe_rgb: False
 
     # ── 2D Occupancy Grid (published as /map for Nav2) ─────────────────────
-    Grid/CellSize: "0.02"
-    Grid/RangeMax: "5.0"
-    Grid/3D: "true"                # 2D grid for Nav2; cloud_map is built separately
-    Grid/Sensor: "1"
+    Grid/CellSize: "0.05"
+    Grid/RangeMax: "8.0"
+    Grid/3D: "false"               # use flat 2D grid — avoids wall projection artifacts
+    Grid/Sensor: "0"               # 0 = LiDAR only for the 2D grid (clean, no camera tilt noise)
+    Grid/GroundIsObstacle: "false" # floor is NOT an obstacle
+    Grid/MaxObstacleHeight: "1.0"  # only mark obstacles up to 1m (chairs/desks, not ceilings)
 
-    # ── Visual Feature Matching ────────────────────────────────────────────
-    Vis/MinInliers: "6"
+    # ── Visual Feature Matching — disabled for ICP-only strategy ─────────
+    Vis/MinInliers: "12"
+    Kp/MaxFeatures: "0"            # disable keypoint extraction — saves CPU since ICP handles registration
+    Mem/ImagePreDecimation: "4"    # downsample image 4x before processing — reduces CPU
+    Mem/ImagePostDecimation: "2"   # downsample stored image — saves memory
+
+    # ── ICP Scan Matching (used when Reg/Strategy=1) ───────────────────────
+    Icp/MaxTranslation: "0.3"      # max translation between scans — reject bad matches
+    Icp/MaxCorrespondenceDistance: "0.1"  # 10cm — tight matching for office walls
+    Icp/PointToPlane: "true"       # better accuracy on flat walls
+    Icp/Iterations: "30"           # enough iterations for convergence
+    Icp/VoxelSize: "0.05"          # downsample scan to 5cm — matches LiDAR resolution
 
     # ── Map Update Rate ────────────────────────────────────────────────────
     Rtabmap/TimeThr: "0"
-    Rtabmap/DetectionRate: "3"
+    # Rtabmap/DetectionRate: "3"
+    Rtabmap/DetectionRate: "1"     # 1Hz during navigation — reduces CPU load
 
     # ── Node Creation Triggers ─────────────────────────────────────────────
     RGBD/LinearUpdate: "0.05"
@@ -51,18 +64,16 @@ rtabmap:
     # cloud_voxel_size: voxel size for the assembled /cloud_map
     # 0.0 = no voxelization (keep every point) → densest cloud
     # 0.02 = 2cm voxels (recommended balance of density vs performance)
-    cloud_voxel_size: 0.01
+    cloud_voxel_size: 0.02      # 2cm voxels — fine enough to capture chair legs/backs
 
-    # cloud_decimation: use 1 out of every N depth pixels for cloud map
-    # 1 = use ALL pixels from depth image → fully dense wall surfaces
-    # 4 = default (only 1/16th of depth pixels) → sparse/flat looking
+    # cloud_decimation: 1 = ALL depth pixels used (max density)
     cloud_decimation: 1
 
-    # cloud_max_depth: ignore depth points beyond this distance (meters)
-    cloud_max_depth: 6.0
+    # cloud_max_depth: capture objects up to 8m away (full office row coverage)
+    cloud_max_depth: 8.0
 
-    # cloud_min_depth: ignore depth points closer than this distance (meters)
-    cloud_min_depth: 0.1
+    # cloud_min_depth: capture objects as close as 5cm (near chair legs)
+    cloud_min_depth: 0.3
 
     database_path: "/home/user/Documents/ros2_ws_ict_nav2/src/ict_bot_nav/maps/office_3d_map.db"
 

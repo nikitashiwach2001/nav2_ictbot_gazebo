@@ -44,7 +44,15 @@ def generate_launch_description():
 
     return LaunchDescription([
 
-        #   0. Static TF: camera_link → camera_optical_link          
+        # camera_info_pub — Isaac Sim doesn't publish camera_info; this node generates it
+        Node(
+            package='ict_bot_nav',
+            executable='camera_info_pub',
+            name='camera_info_pub',
+            output='screen',
+        ),
+
+        #   0. Static TF: camera_link → camera_optical_link
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
@@ -66,7 +74,7 @@ def generate_launch_description():
             parameters=[{
                 'use_sim_time': True,
                 'approx_sync': True,
-                'approx_sync_max_interval': 0.8,     # Isaac Sim (higher jitter ~123ms)
+                'approx_sync_max_interval': 0.4,     # Isaac Sim (higher jitter ~123ms)
                 'queue_size': 50,                    # Isaac Sim
             }],
             remappings=[
@@ -88,34 +96,40 @@ def generate_launch_description():
                     'use_sim_time': True,
                     'Mem/IncrementalMemory': 'false',
                     'Mem/InitWMWithAllNodes': 'true',
-                    'map_always_update': True,
-                    #   Camera-only overrides                 
-                    'subscribe_scan': False,
-                    'RGBD/ProximityBySpace': 'false',
+                    # 'map_always_update': True,   # disabled — was modifying the db on every navigation run, drifting the map
+                    'map_always_update': False,
+                    # Camera + LiDAR localization ───────────────────────
+                    'subscribe_scan': True,
+                    'RGBD/ProximityBySpace': 'true',
                     # estimate set in RViz (2D Pose Estimate button).
                     'Kp/MaxFeatures': '-1',
 
-                    'Grid/3D': 'true',               # enable 3D occupancy grid
-                    'Grid/Sensor': '1',              # 1 = depth camera (not LiDAR)
-                    'Grid/CellSize': '0.05',         # 5cm voxel size
-                    'Grid/RangeMax': '4.0',          # max depth range in meters
-                    'Grid/RangeMin': '0.1',          # ignore points too close
+                    'Grid/3D': 'false',
+                    'Grid/Sensor': '0',              # 0 = LiDAR only for 2D grid
+                    'Grid/CellSize': '0.05',
+                    'Grid/RangeMax': '8.0',
+                    'Grid/RangeMin': '0.1',
+                    'Grid/GroundIsObstacle': 'false',
+                    'Grid/MaxObstacleHeight': '1.0',
                     'Grid/NormalsSegmentation': 'false',  # no floor filtering for now
                     'RGBD/CreateOccupancyGrid': 'true',
-                    'cloud_voxel_size': 0.02,    # point cloud density
-                    'cloud_max_depth': 4.0,
+                    'cloud_voxel_size': 0.02,
+                    'cloud_decimation': 1,
+                    'cloud_max_depth': 8.0,
+                    'cloud_min_depth': 0.3,
 
-                    #   Localization registration: visual (Vis) not ICP      
-                    'Reg/Strategy': '0',
+                    #   Localization registration
+                    # 'Reg/Strategy': '2',   # Visual + ICP — unreliable in low-texture office (plain walls)
+                    'Reg/Strategy': '1',      # ICP only — LiDAR scan matching, no visual dependency
                     # 'Mem/LocalizationDataSaved': 'true',
                     # 'publish_maps_in_background': 'false',
-                    'Rtabmap/DetectionRate': '1',
+                    'Rtabmap/DetectionRate': '2',
                 } 
             ],
             remappings=[
                 ('rgbd_image', '/rgbd_image'),
-                # ('scan', '/scan'),  # commented out — no LiDAR in this mode
-                ('odom',            '/odom'),
+                ('scan',       '/scan'),
+                ('odom',       '/odom'),
             ],
         ),
 

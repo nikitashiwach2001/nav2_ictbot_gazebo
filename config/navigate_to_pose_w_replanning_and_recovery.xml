@@ -1,0 +1,60 @@
+
+<!--
+  This Behavior Tree replans the global path periodically at 1 Hz and it also has
+  recovery actions specific to planning / control as well as general system issues.
+  This will be continuous if a kinematically valid planner is selected.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+
+    <!-- <RecoveryNode number_of_retries="6" name="NavigateRecovery"> -->
+    <!-- <RecoveryNode number_of_retries="2" name="NavigateRecovery"> -->  <!-- too low — goal aborts too fast -->
+    <RecoveryNode number_of_retries="4" name="NavigateRecovery">
+
+      <PipelineSequence name="NavigateWithReplanning">
+
+        <RateController hz="1.0">
+
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+            <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+
+        </RateController>
+        
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+
+      </PipelineSequence>
+
+      <ReactiveFallback name="RecoveryFallback">
+
+        <GoalUpdated/>
+
+        <!-- RECOVERY ACTIONS -->
+        <RoundRobin name="RecoveryActions">
+
+          <!-- 1. Back up first (fast escape) -->
+          <BackUp backup_dist="0.30" backup_speed="0.05"/>
+
+          <!-- 2. Try small forward motion -->
+          <DriveOnHeading 
+              dist_to_travel="0.15" 
+              speed="0.05" 
+              time_allowance="10"/>
+
+          <!-- 3. Clear costmap (remove noise) -->
+          <ClearEntireCostmap 
+              name="ClearLocalCostmap" 
+              service_name="local_costmap/clear_entirely_local_costmap"/>
+
+          <!-- 4. Optional wait -->
+          <Wait wait_duration="2"/>
+
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>
