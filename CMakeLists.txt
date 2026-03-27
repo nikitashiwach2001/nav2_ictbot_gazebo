@@ -16,6 +16,7 @@ install(DIRECTORY
 install(PROGRAMS
   scripts/send_goal.py
   scripts/send_multipoint.py
+  scripts/urdf_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

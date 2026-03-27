@@ -10,7 +10,14 @@ def generate_launch_description():
     pkg = get_package_share_directory('ict_bot_nav')
 
     nav2_params  = os.path.join(pkg, 'config', 'nav2_params.yaml')
-    map_file     = os.path.join(pkg, 'maps', 'isaac_room_map.yaml')
+    default_map  = os.path.join(pkg, 'maps', 'office_map_partcial.yaml')
+
+    declare_map = DeclareLaunchArgument(
+        'map', default_value=default_map,
+        description='Full path to the map yaml file'
+    )
+    map_file = LaunchConfiguration('map')
+
 
     rviz_config  = os.path.join(pkg, 'config', 'nav2_rviz.rviz')
 
@@ -20,6 +27,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_map,
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(nav2_launch),

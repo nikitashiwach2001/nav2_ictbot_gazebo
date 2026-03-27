@@ -17,6 +17,23 @@ def generate_launch_description():
 
     return LaunchDescription([
 
+        # Publishes /robot_description for RViz robot model (no TF — Isaac Sim handles TF)
+        Node(
+            package='ict_bot_nav',
+            executable='urdf_publisher.py',
+            name='urdf_publisher',
+            output='screen',
+        ),
+
+        # base_link is a fixed alias in the URDF; Isaac Sim does not publish it
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='base_link_broadcaster',
+            arguments=['0', '0', '0', '0', '0', '0', 'base_footprint', 'base_link'],
+            output='screen',
+        ),
+
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(slam_launch),
             launch_arguments={
