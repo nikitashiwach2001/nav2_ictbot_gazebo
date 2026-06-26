@@ -1,9 +1,9 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
@@ -29,14 +29,17 @@ def generate_launch_description():
     return LaunchDescription([
         declare_map,
 
+        # remap /cmd_vel → /cmd_vel_nav2 scoped to Nav2 only; RL node owns /cmd_vel
+        # GroupAction([
+        #     SetRemap('/cmd_vel', '/cmd_vel_nav2'),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(nav2_launch),
-            launch_arguments={
-                'map': map_file,
-                'use_sim_time': 'true',
-                'params_file': nav2_params
-            }.items()
-        ),
+                PythonLaunchDescriptionSource(nav2_launch),
+                launch_arguments={
+                    'map': map_file,
+                    'use_sim_time': 'true',
+                    'params_file': nav2_params
+                }.items()
+            ),
 
         Node(
             package='rviz2',
@@ -46,4 +49,13 @@ def generate_launch_description():
             parameters=[{'use_sim_time': True}],
             arguments=['-d', rviz_config]
         ),
+
+        # RL node — owns /cmd_vel; Nav2 redirected to /cmd_vel_nav2 via GroupAction above
+    #     Node(
+    #         package='rl_nav2_controller',
+    #         executable='rl_nav_node',
+    #         name='rl_nav_node',
+    #         output='screen',
+    #         parameters=[{'use_sim_time': True}]
+    #     ),
     ])
